@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E31B23" />
+      <stop offset="100%" stop-color="#B91218" />
+    </linearGradient>
+    <linearGradient id="glowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.35" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+  <!-- Background Rounded Rect -->
+  <rect width="512" height="512" rx="128" fill="url(#bgGrad)"/>
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="url(#glowGrad)" stroke="rgba(255,255,255,0.2)" stroke-width="4"/>
+
+  <!-- Mess Cloche / Dish Plate -->
+  <!-- Cloche Dome -->
+  <path d="M128 290 C 128 180, 384 180, 384 290 Z" fill="#FFFFFF" />
+  
+  <!-- Handle Knob -->
+  <circle cx="256" cy="180" r="22" fill="#FFFFFF" />
+  <circle cx="256" cy="180" r="12" fill="#E31B23" />
+
+  <!-- Base Plate -->
+  <rect x="96" y="296" width="320" height="24" rx="12" fill="#FFFFFF" />
+  <rect x="128" y="326" width="256" height="14" rx="7" fill="rgba(255,255,255,0.7)" />
+
+  <!-- Sync circular arrows inside cloche or around -->
+  <path d="M210 248 C 218 230, 240 220, 264 224 C 286 228, 298 244, 298 260" stroke="#E31B23" stroke-width="12" stroke-linecap="round" />
+  <polygon points="292,260 308,260 300,274" fill="#E31B23" />
+  
+  <path d="M302 268 C 294 286, 272 296, 248 292 C 226 288, 214 272, 214 256" stroke="#E31B23" stroke-width="12" stroke-linecap="round" />
+  <polygon points="220,256 204,256 212,242" fill="#E31B23" />
+
+  <!-- Chitkara University C Subtle Accent steam -->
+  <path d="M236 120 C 236 100, 252 90, 256 70" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" opacity="0.8" />
+  <path d="M276 126 C 276 108, 290 100, 292 80" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" opacity="0.8" />
+</svg>

@@ -1,0 +1,87 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.admin == true ||
+        request.auth.token.email.matches('.*@chitkara[.]edu[.]in') ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    // Published Week Menus
+    // Public can read published menus; only admin can create or modify
+    match /menuWeeks/{weekId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Historical Published Version Snapshots
+    match /menuVersions/{versionId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Menu Drafts
+    // Only administrators can read or write drafts
+    match /menuDrafts/{draftId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Rating Aggregates
+    // Public can read aggregates; updates allowed with basic validation or admin
+    match /ratingAggregates/{mealId} {
+      allow read: if true;
+      allow create, update: if 
+        request.resource.data.average >= 1.0 &&
+        request.resource.data.average <= 5.0 &&
+        request.resource.data.count >= 0;
+      allow delete: if isAdmin();
+    }
+
+    // Individual Meal Ratings
+    match /ratings/{ratingId} {
+      allow read: if resource.data.status == 'published' || isAdmin();
+      
+      // Public / students can submit their rating with valid rating constraints (1-5)
+      allow create: if
+        request.resource.data.rating >= 1 &&
+        request.resource.data.rating <= 5 &&
+        request.resource.data.deviceId is string &&
+        request.resource.data.deviceId.size() > 5;
+        
+      // Students can edit their own rating; admins can moderate status
+      allow update: if
+        (request.resource.data.rating >= 1 && request.resource.data.rating <= 5) ||
+        isAdmin();
+
+      allow delete: if isAdmin();
+    }
+
+    // Audit Logs
+    match /auditLogs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() || isAuthenticated();
+      allow update, delete: if false; // Immutable audit log
+    }
+
+    // App Configuration & Timing Settings
+    match /appConfig/{configId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

@@ -1,0 +1,28 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.admin == true ||
+        request.auth.token.email.matches('.*@chitkara[.]edu[.]in')
+      );
+    }
+
+    // Menu notices and uploaded photographs
+    match /menuNotices/{imageId} {
+      // Public students can view published menu photographs
+      allow read: if true;
+
+      // Only administrators can upload menu notice images
+      // Restricted to images under 15MB
+      allow write: if isAdmin()
+        && request.resource.contentType.matches('image/.*')
+        && request.resource.size < 15 * 1024 * 1024;
+    }
+  }
+}
