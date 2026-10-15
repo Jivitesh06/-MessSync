@@ -166,14 +166,27 @@ export function getSmartCurrentMeal(
     return { meal: upcoming[0], isTomorrow: false };
   }
 
-  // 3. All meals for today have ended (e.g. after 22:00 IST). Show tomorrow's breakfast!
+  // 3. All meals for today have ended (after dinner ends at 20:50 IST). Show tomorrow's breakfast!
   if (tomorrowMeals && tomorrowMeals.length > 0) {
     const tomorrowBreakfast = tomorrowMeals.find((m) => m.slotId === 'breakfast') || tomorrowMeals[0];
     return { meal: tomorrowBreakfast, isTomorrow: true };
   }
 
-  // Fallback to last meal of today (Dinner)
-  return { meal: todayMeals[todayMeals.length - 1], isTomorrow: false };
+  // Fallback: If tomorrow's week isn't loaded yet (e.g. Sunday evening), construct tomorrow's breakfast
+  const todayBreakfast = todayMeals.find((m) => m.slotId === 'breakfast') || todayMeals[0];
+  const tomorrowDate = new Date(now);
+  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+  const tomorrowDateStr = formatISODate(tomorrowDate);
+
+  return {
+    meal: {
+      ...todayBreakfast,
+      id: `${tomorrowDateStr}-breakfast`,
+      date: tomorrowDateStr,
+      dayOfWeek: tomorrowDate.toLocaleDateString('en-US', { weekday: 'long' }) as MealOccurrence['dayOfWeek'],
+    },
+    isTomorrow: true,
+  };
 }
 
 /**

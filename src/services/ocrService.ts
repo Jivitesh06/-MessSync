@@ -184,7 +184,7 @@ export function generateSampleChitkaraNoticePhoto(): string {
   ctx.font = 'bold 22px sans-serif';
   ctx.fillText('STUDENTS MESS SCHEDULE • PUNJAB CAMPUS', 500, 135);
   ctx.font = '16px sans-serif';
-  ctx.fillText('Timings: B’fast (07:00-10:00) | Lunch (12:00-15:00) | Snacks (16:00-18:00) | Dinner (19:00-22:00)', 500, 165);
+  ctx.fillText('Timings: B’fast (07:30-08:50) | Lunch (12:00-14:30) | Snacks (16:30-17:30) | Dinner (19:30-20:50)', 500, 165);
 
   // Table grid outline
   ctx.strokeStyle = '#D1D5DB';

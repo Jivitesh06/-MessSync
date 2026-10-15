@@ -4,7 +4,7 @@ import { CurrentMealHero } from '@/components/student/CurrentMealHero';
 import { MealCard } from '@/components/student/MealCard';
 import { InstallPrompt } from '@/components/common/InstallPrompt';
 import { RatingModal } from '@/components/student/RatingModal';
-import { getSmartCurrentMeal, getTodayIST, formatFriendlyDate } from '@/utils/dateUtils';
+import { getSmartCurrentMeal, getTodayIST, formatFriendlyDate, formatTime12h } from '@/utils/dateUtils';
 import { Sparkles, CalendarDays, Search, WifiOff, Clock } from 'lucide-react';
 
 interface HomePageProps {
@@ -57,7 +57,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             </h2>
           </div>
           <span className="text-xs font-semibold text-chitkara">
-            {isTomorrow ? 'Starts 7:00 AM' : 'Live Status'}
+            {isTomorrow ? `Starts ${formatTime12h(smartMeal?.startTime || '07:30')}` : 'Live Status'}
           </span>
         </div>
 

@@ -46,30 +46,88 @@ test('Scenario 1: Visitor can access Chitkara weekly schedule across Mon-Sun wit
 });
 
 // -------------------------------------------------------------
-// Scenario 2: Smart Meal Selection & Asia/Kolkata Timings
+// Scenario 2: Smart Meal Selection & Asia/Kolkata Official Timings
 // -------------------------------------------------------------
-test('Scenario 2: Smart meal selection prioritizes current serving or upcoming meal', () => {
+test('Scenario 2: Smart meal selection prioritizes current serving or upcoming meal with official timings', () => {
   const menu = buildWeekMenuForDate('2026-10-15');
   const todayMeals = menu.days['2026-10-15'];
 
-  // Simulate 12:30 PM (Lunch time)
+  // Breakfast (07:30 - 08:50)
+  // Simulate 7:15 AM (Before breakfast starts) -> Coming Up
+  const simulatedEarlyNow = new Date('2026-10-15T07:15:00');
+  const statusEarly = computeMealStatus(todayMeals[0], simulatedEarlyNow);
+  assert.strictEqual(statusEarly.status, 'coming_up', '7:15 AM is before breakfast start');
+
+  // Simulate 8:00 AM (During breakfast) -> Serving Now
+  const simulatedBfastNow = new Date('2026-10-15T08:00:00');
+  const statusBfast = computeMealStatus(todayMeals[0], simulatedBfastNow);
+  assert.strictEqual(statusBfast.status, 'serving_now', '8:00 AM is during breakfast');
+
+  // Lunch (12:00 - 14:30)
+  // Simulate 12:30 PM (Lunch time) -> Serving Now
   const simulatedLunchNow = new Date('2026-10-15T12:30:00');
   const statusLunch = computeMealStatus(todayMeals[1], simulatedLunchNow);
-  assert.strictEqual(statusLunch.status, 'serving_now');
+  assert.strictEqual(statusLunch.status, 'serving_now', '12:30 PM is during lunch');
   assert.strictEqual(statusLunch.isToday, true);
 
-  // Simulate 6:30 AM (Before breakfast)
-  const simulatedEarlyNow = new Date('2026-10-15T06:30:00');
-  const statusEarly = computeMealStatus(todayMeals[0], simulatedEarlyNow);
-  assert.strictEqual(statusEarly.status, 'coming_up');
+  // Dinner (19:30 - 20:50)
+  // Simulate 8:00 PM (20:00, During dinner) -> Serving Now
+  const simulatedDinnerNow = new Date('2026-10-15T20:00:00');
+  const statusDinner = computeMealStatus(todayMeals[3], simulatedDinnerNow);
+  assert.strictEqual(statusDinner.status, 'serving_now', '8:00 PM is during dinner');
 
-  // Simulate 10:30 PM (After dinner) -> picks tomorrow's breakfast!
+  // Simulate 8:55 PM (20:55, After dinner ends at 20:50) -> picks tomorrow's breakfast!
   const tomorrowMeals = menu.days['2026-10-16'];
-  const simulatedNightNow = new Date('2026-10-15T22:30:00');
+  const simulatedNightNow = new Date('2026-10-15T20:55:00');
   const { meal: smartMeal, isTomorrow } = getSmartCurrentMeal(todayMeals, tomorrowMeals, simulatedNightNow);
   assert.ok(smartMeal);
-  assert.strictEqual(smartMeal.slotId, 'breakfast');
-  assert.strictEqual(isTomorrow, true);
+  assert.strictEqual(smartMeal.slotId, 'breakfast', 'After 8:50 PM dinner cutoff, returns breakfast');
+  assert.strictEqual(isTomorrow, true, 'Marked as tomorrow');
+});
+
+// -------------------------------------------------------------
+// Scenario 2B: Strict Boundary Precision Tests (7:30 AM, 8:50 AM, 12:00 PM, 2:30 PM, 7:30 PM, 8:50 PM)
+// -------------------------------------------------------------
+test('Scenario 2B: Exact boundary transitions at 7:30 AM, 8:50 AM, 12:00 PM, 2:30 PM, 7:30 PM, and 8:50 PM', () => {
+  const menu = buildWeekMenuForDate('2026-10-15');
+  const todayMeals = menu.days['2026-10-15'];
+  const [breakfast, lunch, snacks, dinner] = todayMeals;
+
+  // 1. Breakfast Boundaries: 07:30 to 08:50
+  // 7:29 AM -> Coming Up
+  assert.strictEqual(computeMealStatus(breakfast, new Date('2026-10-15T07:29:00')).status, 'coming_up');
+  // 7:30 AM sharp -> Serving Now
+  assert.strictEqual(computeMealStatus(breakfast, new Date('2026-10-15T07:30:00')).status, 'serving_now');
+  // 8:49 AM -> Serving Now
+  assert.strictEqual(computeMealStatus(breakfast, new Date('2026-10-15T08:49:00')).status, 'serving_now');
+  // 8:50 AM sharp -> Served
+  assert.strictEqual(computeMealStatus(breakfast, new Date('2026-10-15T08:50:00')).status, 'served');
+
+  // 2. Lunch Boundaries: 12:00 to 14:30
+  // 11:59 AM -> Coming Up
+  assert.strictEqual(computeMealStatus(lunch, new Date('2026-10-15T11:59:00')).status, 'coming_up');
+  // 12:00 PM sharp -> Serving Now
+  assert.strictEqual(computeMealStatus(lunch, new Date('2026-10-15T12:00:00')).status, 'serving_now');
+  // 2:29 PM (14:29) -> Serving Now
+  assert.strictEqual(computeMealStatus(lunch, new Date('2026-10-15T14:29:00')).status, 'serving_now');
+  // 2:30 PM sharp (14:30) -> Served
+  assert.strictEqual(computeMealStatus(lunch, new Date('2026-10-15T14:30:00')).status, 'served');
+
+  // 3. Dinner Boundaries: 19:30 to 20:50
+  // 7:29 PM (19:29) -> Coming Up
+  assert.strictEqual(computeMealStatus(dinner, new Date('2026-10-15T19:29:00')).status, 'coming_up');
+  // 7:30 PM sharp (19:30) -> Serving Now
+  assert.strictEqual(computeMealStatus(dinner, new Date('2026-10-15T19:30:00')).status, 'serving_now');
+  // 8:49 PM (20:49) -> Serving Now
+  assert.strictEqual(computeMealStatus(dinner, new Date('2026-10-15T20:49:00')).status, 'serving_now');
+  // 8:50 PM sharp (20:50) -> Served
+  assert.strictEqual(computeMealStatus(dinner, new Date('2026-10-15T20:50:00')).status, 'served');
+
+  // 4. Automatic transition after 8:50 PM dinner cutoff
+  const tomorrowMeals = menu.days['2026-10-16'];
+  const postDinnerSmart = getSmartCurrentMeal(todayMeals, tomorrowMeals, new Date('2026-10-15T20:50:01'));
+  assert.strictEqual(postDinnerSmart.isTomorrow, true);
+  assert.strictEqual(postDinnerSmart.meal.slotId, 'breakfast');
 });
 
 // -------------------------------------------------------------

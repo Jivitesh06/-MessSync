@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { authService } from '@/services/authService';
 import { useSyncStatus } from '@/services/syncService';
+import { mealTimingService } from '@/services/mealTimingService';
 import { formatTime12h } from '@/utils/dateUtils';
 
 interface MorePageProps {
@@ -26,6 +27,12 @@ export const MorePage: React.FC<MorePageProps> = ({
   const isAdmin = authService.isAdmin();
   const currentUser = authService.getCurrentUser();
   const syncState = useSyncStatus();
+
+  const [timings, setTimings] = React.useState(mealTimingService.getCurrentTimings());
+
+  React.useEffect(() => {
+    return mealTimingService.subscribeToTimings((updated) => setTimings(updated));
+  }, []);
 
   return (
     <div className="space-y-6 pb-20">
@@ -55,7 +62,7 @@ export const MorePage: React.FC<MorePageProps> = ({
               Breakfast
             </span>
             <span className="text-xs font-extrabold text-slate-800">
-              07:00 AM – 10:00 AM
+              {formatTime12h(timings.breakfast.startTime)} – {formatTime12h(timings.breakfast.endTime)}
             </span>
           </div>
 
@@ -64,16 +71,21 @@ export const MorePage: React.FC<MorePageProps> = ({
               Lunch
             </span>
             <span className="text-xs font-extrabold text-slate-800">
-              12:00 PM – 03:00 PM
+              {formatTime12h(timings.lunch.startTime)} – {formatTime12h(timings.lunch.endTime)}
             </span>
           </div>
 
           <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-              Evening Snacks
-            </span>
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                Evening Snacks
+              </span>
+              <span className="text-[9px] font-bold text-amber-600 bg-amber-50 px-1 rounded">
+                Admin
+              </span>
+            </div>
             <span className="text-xs font-extrabold text-slate-800">
-              04:00 PM – 06:00 PM
+              {formatTime12h(timings.snacks.startTime)} – {formatTime12h(timings.snacks.endTime)}
             </span>
           </div>
 
@@ -82,7 +94,7 @@ export const MorePage: React.FC<MorePageProps> = ({
               Dinner
             </span>
             <span className="text-xs font-extrabold text-slate-800">
-              07:00 PM – 10:00 PM
+              {formatTime12h(timings.dinner.startTime)} – {formatTime12h(timings.dinner.endTime)}
             </span>
           </div>
         </div>

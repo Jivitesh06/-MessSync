@@ -19,6 +19,7 @@ import {
   ExternalLink,
   AlertCircle,
   Eye,
+  Clock,
 } from 'lucide-react';
 
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
@@ -26,6 +27,7 @@ import { PhotoUploadView } from '@/components/admin/PhotoUploadView';
 import { OcrReviewView } from '@/components/admin/OcrReviewView';
 import { MenuDiffView } from '@/components/admin/MenuDiffView';
 import { ManualEditorView } from '@/components/admin/ManualEditorView';
+import { MealTimingsConfigView } from '@/components/admin/MealTimingsConfigView';
 import { RatingModerationView } from '@/components/admin/RatingModerationView';
 import { VersionHistoryView } from '@/components/admin/VersionHistoryView';
 
@@ -41,6 +43,7 @@ export type AdminTab =
   | 'ocr_review'
   | 'menu_diff'
   | 'manual'
+  | 'timings'
   | 'ratings'
   | 'history';
 
@@ -319,6 +322,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({
             ? [{ id: 'menu_diff' as AdminTab, label: 'Compare & Publish', icon: ShieldCheck }]
             : []),
           { id: 'manual' as AdminTab, label: 'Manual Editor', icon: Edit3 },
+          { id: 'timings' as AdminTab, label: 'Meal Timings', icon: Clock },
           { id: 'ratings' as AdminTab, label: 'Rating Analytics', icon: Star },
           { id: 'history' as AdminTab, label: 'Versions & Drafts', icon: History },
         ].map((tab) => {
@@ -382,6 +386,13 @@ export const AdminPage: React.FC<AdminPageProps> = ({
             await handleFinalPublish(updated, summary);
           }}
           onSaveDraft={handleSaveDraft}
+        />
+      )}
+
+      {activeTab === 'timings' && (
+        <MealTimingsConfigView
+          currentWeekMenu={currentWeekMenu}
+          onMenuUpdated={onMenuUpdated}
         />
       )}
 

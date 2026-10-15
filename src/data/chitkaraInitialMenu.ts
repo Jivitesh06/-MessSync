@@ -1,3 +1,4 @@
+import { DEFAULT_CHITKARA_TIMINGS } from '@/config/mealTimings';
 import { WeekMenu, MealOccurrence, Dish } from '@/types/menu';
 import { getWeekBoundaries } from '@/utils/dateUtils';
 
@@ -21,8 +22,8 @@ export const CHITKARA_WEEK_TEMPLATE: Record<string, ChitkaraTemplateMeal[]> = {
     {
       slotId: 'breakfast',
       name: 'Breakfast',
-      startTime: '07:00',
-      endTime: '10:00',
+      startTime: '07:30',
+      endTime: '08:50',
       dishes: [
         { name: 'Aloo Onion Paratha', category: 'Breads', isVegetarian: true },
         { name: 'Fresh Curd & Mango Pickle', category: 'Sides', isVegetarian: true },
@@ -36,7 +37,7 @@ export const CHITKARA_WEEK_TEMPLATE: Record<string, ChitkaraTemplateMeal[]> = {
       slotId: 'lunch',
       name: 'Lunch',
       startTime: '12:00',
-      endTime: '15:00',
+      endTime: '14:30',
       dishes: [
         { name: 'Rajma Masala (Jammu Style)', category: 'Main', isVegetarian: true },
         { name: 'Steamed Long Grain Basmati Rice', category: 'Rice', isVegetarian: true },
@@ -49,8 +50,8 @@ export const CHITKARA_WEEK_TEMPLATE: Record<string, ChitkaraTemplateMeal[]> = {
     {
       slotId: 'snacks',
       name: 'Evening Tea & Snacks',
-      startTime: '16:00',
-      endTime: '18:00',
+      startTime: '16:30',
+      endTime: '17:30',
       dishes: [
         { name: 'Crispy Samosa (1 pc)', category: 'Main', isVegetarian: true },
         { name: 'Saunth (Tamarind) & Mint Chutney', category: 'Sides', isVegetarian: true },
@@ -60,8 +61,8 @@ export const CHITKARA_WEEK_TEMPLATE: Record<string, ChitkaraTemplateMeal[]> = {
     {
       slotId: 'dinner',
       name: 'Dinner',
-      startTime: '19:00',
-      endTime: '22:00',
+      startTime: '19:30',
+      endTime: '20:50',
       dishes: [
         { name: 'Dal Tadka (Yellow Moong & Arhar)', category: 'Main', isVegetarian: true },
         { name: 'Kadai Paneer with Bell Peppers', category: 'Main', isVegetarian: true },
@@ -81,8 +82,8 @@ export const CHITKARA_WEEK_TEMPLATE: Record<string, ChitkaraTemplateMeal[]> = {
     {
       slotId: 'breakfast',
       name: 'Breakfast',
-      startTime: '07:00',
-      endTime: '10:00',
+      startTime: '07:30',
+      endTime: '08:50',
       dishes: [
         { name: 'Indori Veg Poha with Roasted Peanuts', category: 'Main', isVegetarian: true },
         { name: 'Ratlam Sev & Fresh Lemon Wedges', category: 'Sides', isVegetarian: true },
@@ -96,7 +97,7 @@ export const CHITKARA_WEEK_TEMPLATE: Record<string, ChitkaraTemplateMeal[]> = {
       slotId: 'lunch',
       name: 'Lunch',
       startTime: '12:00',
-      endTime: '15:00',
+      endTime: '14:30',
       dishes: [
         { name: 'Punjabi Kadhi with Crispy Onion Pakoras', category: 'Main', isVegetarian: true },
         { name: 'Steamed Jeera Rice', category: 'Rice', isVegetarian: true },
@@ -109,8 +110,8 @@ export const CHITKARA_WEEK_TEMPLATE: Record<string, ChitkaraTemplateMeal[]> = {
     {
       slotId: 'snacks',
       name: 'Evening Tea & Snacks',
-      startTime: '16:00',
-      endTime: '18:00',
+      startTime: '16:30',
+      endTime: '17:30',
       dishes: [
         { name: 'Desi Masala Veg Macaroni', category: 'Main', isVegetarian: true },
         { name: 'Hot Ginger Tea', category: 'Beverage', isVegetarian: true },
@@ -119,8 +120,8 @@ export const CHITKARA_WEEK_TEMPLATE: Record<string, ChitkaraTemplateMeal[]> = {
     {
       slotId: 'dinner',
       name: 'Dinner',
-      startTime: '19:00',
-      endTime: '22:00',
+      startTime: '19:30',
+      endTime: '20:50',
       dishes: [
         { name: 'Dal Makhani (Slow cooked with butter)', category: 'Main', isVegetarian: true },
         { name: 'Mughlai Shahi Paneer in Cashew Gravy', category: 'Main', isVegetarian: true },
@@ -134,8 +135,8 @@ export const CHITKARA_WEEK_TEMPLATE: Record<string, ChitkaraTemplateMeal[]> = {
     {
       slotId: 'breakfast',
       name: 'Breakfast',
-      startTime: '07:00',
-      endTime: '10:00',
+      startTime: '07:30',
+      endTime: '08:50',
       dishes: [
         { name: 'Steamed Rava Idli & Mini Onion Uttapam', category: 'Main', isVegetarian: true },
         { name: 'Hot Vegetable Sambar', category: 'Sides', isVegetarian: true },
@@ -149,7 +150,7 @@ export const CHITKARA_WEEK_TEMPLATE: Record<string, ChitkaraTemplateMeal[]> = {
       slotId: 'lunch',
       name: 'Lunch',
       startTime: '12:00',
-      endTime: '15:00',
+      endTime: '14:30',
       dishes: [
         { name: 'Amritsari Chole Masala', category: 'Main', isVegetarian: true },
         { name: 'Fluffy Bhature / Fresh Chapati', category: 'Breads', isVegetarian: true },
@@ -162,8 +163,8 @@ export const CHITKARA_WEEK_TEMPLATE: Record<string, ChitkaraTemplateMeal[]> = {
     {
       slotId: 'snacks',
       name: 'Evening Tea & Snacks',
-      startTime: '16:00',
-      endTime: '18:00',
+      startTime: '16:30',
+      endTime: '17:30',
       dishes: [
         { name: 'Stuffed Paneer Bread Pakora', category: 'Main', isVegetarian: true },
         { name: 'Spicy Mint & Coriander Chutney', category: 'Sides', isVegetarian: true },
@@ -173,8 +174,8 @@ export const CHITKARA_WEEK_TEMPLATE: Record<string, ChitkaraTemplateMeal[]> = {
     {
       slotId: 'dinner',
       name: 'Dinner',
-      startTime: '19:00',
-      endTime: '22:00',
+      startTime: '19:30',
+      endTime: '20:50',
       dishes: [
         { name: 'Yellow Moong Dal Fry with Garlic Tadka', category: 'Main', isVegetarian: true },
         { name: 'Dum Aloo Kashmiri', category: 'Main', isVegetarian: true },
@@ -194,8 +195,8 @@ export const CHITKARA_WEEK_TEMPLATE: Record<string, ChitkaraTemplateMeal[]> = {
     {
       slotId: 'breakfast',
       name: 'Breakfast',
-      startTime: '07:00',
-      endTime: '10:00',
+      startTime: '07:30',
+      endTime: '08:50',
       dishes: [
         { name: 'Crispy Methi Paratha', category: 'Breads', isVegetarian: true },
         { name: 'Fresh Dahi & Mixed Pickle', category: 'Sides', isVegetarian: true },
@@ -209,7 +210,7 @@ export const CHITKARA_WEEK_TEMPLATE: Record<string, ChitkaraTemplateMeal[]> = {
       slotId: 'lunch',
       name: 'Lunch',
       startTime: '12:00',
-      endTime: '15:00',
+      endTime: '14:30',
       dishes: [
         { name: 'Dal Palak (Lentils simmered with fresh spinach)', category: 'Main', isVegetarian: true },
         { name: 'Matar Paneer Curry', category: 'Main', isVegetarian: true },
@@ -222,8 +223,8 @@ export const CHITKARA_WEEK_TEMPLATE: Record<string, ChitkaraTemplateMeal[]> = {
     {
       slotId: 'snacks',
       name: 'Evening Tea & Snacks',
-      startTime: '16:00',
-      endTime: '18:00',
+      startTime: '16:30',
+      endTime: '17:30',
       dishes: [
         { name: 'Namkeen Mathri & Roasted Poha Mix', category: 'Main', isVegetarian: true },
         { name: 'Glucose Biscuits', category: 'Sides', isVegetarian: true },
@@ -233,8 +234,8 @@ export const CHITKARA_WEEK_TEMPLATE: Record<string, ChitkaraTemplateMeal[]> = {
     {
       slotId: 'dinner',
       name: 'Dinner',
-      startTime: '19:00',
-      endTime: '22:00',
+      startTime: '19:30',
+      endTime: '20:50',
       dishes: [
         { name: 'Panchmel Dal (Five Lentil Rajasthani Melange)', category: 'Main', isVegetarian: true },
         { name: 'South Style Mix Veg Beans Carrot Poriyal', category: 'Main', isVegetarian: true },
@@ -254,8 +255,8 @@ export const CHITKARA_WEEK_TEMPLATE: Record<string, ChitkaraTemplateMeal[]> = {
     {
       slotId: 'breakfast',
       name: 'Breakfast',
-      startTime: '07:00',
-      endTime: '10:00',
+      startTime: '07:30',
+      endTime: '08:50',
       dishes: [
         { name: 'Vegetable Upma with Mustard & Curry Leaves', category: 'Main', isVegetarian: true },
         { name: 'Fresh Coconut Chutney', category: 'Sides', isVegetarian: true },
@@ -268,7 +269,7 @@ export const CHITKARA_WEEK_TEMPLATE: Record<string, ChitkaraTemplateMeal[]> = {
       slotId: 'lunch',
       name: 'Lunch',
       startTime: '12:00',
-      endTime: '15:00',
+      endTime: '14:30',
       dishes: [
         { name: 'Punjabi Lobia Masala (Black-eyed peas curry)', category: 'Main', isVegetarian: true },
         { name: 'Aloo Baingan Sukha (Homestyle roasted)', category: 'Main', isVegetarian: true },
@@ -281,8 +282,8 @@ export const CHITKARA_WEEK_TEMPLATE: Record<string, ChitkaraTemplateMeal[]> = {
     {
       slotId: 'snacks',
       name: 'Evening Tea & Snacks',
-      startTime: '16:00',
-      endTime: '18:00',
+      startTime: '16:30',
+      endTime: '17:30',
       dishes: [
         { name: 'Crispy Veg Cutlet (2 pcs)', category: 'Main', isVegetarian: true },
         { name: 'Tomato Ketchup & Mint Dip', category: 'Sides', isVegetarian: true },
@@ -292,8 +293,8 @@ export const CHITKARA_WEEK_TEMPLATE: Record<string, ChitkaraTemplateMeal[]> = {
     {
       slotId: 'dinner',
       name: 'Dinner',
-      startTime: '19:00',
-      endTime: '22:00',
+      startTime: '19:30',
+      endTime: '20:50',
       dishes: [
         { name: 'Dal Bukhara / Dal Makhani', category: 'Main', isVegetarian: true },
         { name: 'Paneer Butter Masala (Rich Cashew Tomato gravy)', category: 'Main', isVegetarian: true, isSpecial: true },
@@ -308,8 +309,8 @@ export const CHITKARA_WEEK_TEMPLATE: Record<string, ChitkaraTemplateMeal[]> = {
     {
       slotId: 'breakfast',
       name: 'Breakfast',
-      startTime: '07:00',
-      endTime: '10:00',
+      startTime: '07:30',
+      endTime: '08:50',
       dishes: [
         { name: 'Gobhi & Mix Veg Stuffed Paratha', category: 'Breads', isVegetarian: true },
         { name: 'Fresh Cream Curd', category: 'Sides', isVegetarian: true },
@@ -322,7 +323,7 @@ export const CHITKARA_WEEK_TEMPLATE: Record<string, ChitkaraTemplateMeal[]> = {
       slotId: 'lunch',
       name: 'Lunch',
       startTime: '12:00',
-      endTime: '15:00',
+      endTime: '14:30',
       dishes: [
         { name: 'Kashmiri Rajma Masala', category: 'Main', isVegetarian: true },
         { name: 'Steamed Rice', category: 'Rice', isVegetarian: true },
@@ -335,8 +336,8 @@ export const CHITKARA_WEEK_TEMPLATE: Record<string, ChitkaraTemplateMeal[]> = {
     {
       slotId: 'snacks',
       name: 'Evening Tea & Snacks',
-      startTime: '16:00',
-      endTime: '18:00',
+      startTime: '16:30',
+      endTime: '17:30',
       dishes: [
         { name: 'Mumbai Bhel Puri with Tangy Chutney & Sev', category: 'Main', isVegetarian: true },
         { name: 'Hot Spiced Lemon Tea', category: 'Beverage', isVegetarian: true },
@@ -345,8 +346,8 @@ export const CHITKARA_WEEK_TEMPLATE: Record<string, ChitkaraTemplateMeal[]> = {
     {
       slotId: 'dinner',
       name: 'Dinner',
-      startTime: '19:00',
-      endTime: '22:00',
+      startTime: '19:30',
+      endTime: '20:50',
       dishes: [
         { name: 'Arhar Dal Tadka with Desi Ghee', category: 'Main', isVegetarian: true },
         { name: 'Amritsari Soya Chaap Masala Gravy', category: 'Main', isVegetarian: true },
@@ -366,8 +367,8 @@ export const CHITKARA_WEEK_TEMPLATE: Record<string, ChitkaraTemplateMeal[]> = {
     {
       slotId: 'breakfast',
       name: 'Breakfast',
-      startTime: '07:00',
-      endTime: '10:00',
+      startTime: '07:30',
+      endTime: '08:50',
       dishes: [
         { name: 'Hot Fluffy Bedmi Puri (4 pcs)', category: 'Breads', isVegetarian: true, isSpecial: true },
         { name: 'Halwai Style Aloo Chana Tariwala Gravy', category: 'Main', isVegetarian: true, isSpecial: true },
@@ -381,7 +382,7 @@ export const CHITKARA_WEEK_TEMPLATE: Record<string, ChitkaraTemplateMeal[]> = {
       slotId: 'lunch',
       name: 'Lunch',
       startTime: '12:00',
-      endTime: '15:00',
+      endTime: '14:30',
       dishes: [
         { name: 'Paneer Do Pyaza (Rich Onion capsicum gravy)', category: 'Main', isVegetarian: true, isSpecial: true },
         { name: 'Chana Dal Fry with Jeera Tadka', category: 'Main', isVegetarian: true },
@@ -394,8 +395,8 @@ export const CHITKARA_WEEK_TEMPLATE: Record<string, ChitkaraTemplateMeal[]> = {
     {
       slotId: 'snacks',
       name: 'Evening Tea & Snacks',
-      startTime: '16:00',
-      endTime: '18:00',
+      startTime: '16:30',
+      endTime: '17:30',
       dishes: [
         { name: 'Grilled Veg Coleslaw Sandwich', category: 'Main', isVegetarian: true },
         { name: 'Hot Filter Coffee / Tea', category: 'Beverage', isVegetarian: true },
@@ -404,8 +405,8 @@ export const CHITKARA_WEEK_TEMPLATE: Record<string, ChitkaraTemplateMeal[]> = {
     {
       slotId: 'dinner',
       name: 'Dinner',
-      startTime: '19:00',
-      endTime: '22:00',
+      startTime: '19:30',
+      endTime: '20:50',
       dishes: [
         { name: 'Chitkara Special Dal Makhani', category: 'Main', isVegetarian: true },
         { name: 'Malai Kofta in Creamy Cashew Korma Gravy', category: 'Main', isVegetarian: true, isSpecial: true },
@@ -445,8 +446,8 @@ export function buildWeekMenuForDate(mondayDateStr: string): WeekMenu {
         dayOfWeek: dayName,
         slotId: tm.slotId,
         name: tm.name,
-        startTime: tm.startTime,
-        endTime: tm.endTime,
+        startTime: DEFAULT_CHITKARA_TIMINGS[tm.slotId]?.startTime || tm.startTime,
+        endTime: DEFAULT_CHITKARA_TIMINGS[tm.slotId]?.endTime || tm.endTime,
         dishes: tm.dishes.map((d, dIdx) => ({
           id: `${mealId}-d${dIdx + 1}`,
           name: d.name,

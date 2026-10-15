@@ -16,8 +16,8 @@ export interface MealOccurrence {
   dayOfWeek: 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
   slotId: MealCategory | string;
   name: string; // "Breakfast", "Lunch", "Evening Tea & Snacks", "Dinner"
-  startTime: string; // "07:00" (24h)
-  endTime: string; // "10:00" (24h)
+  startTime: string; // e.g. "07:30" (24h)
+  endTime: string; // e.g. "08:50" (24h)
   dishes: Dish[];
   ratingSummary?: {
     average: number;

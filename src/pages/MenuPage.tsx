@@ -5,6 +5,7 @@ import { MealCard } from '@/components/student/MealCard';
 import { RatingModal } from '@/components/student/RatingModal';
 import { formatFriendlyDate, getTodayIST, getWeekBoundaries } from '@/utils/dateUtils';
 import { Search, LayoutGrid, Calendar, Filter } from 'lucide-react';
+import { mealTimingService } from '@/services/mealTimingService';
 
 interface MenuPageProps {
   weekMenu: WeekMenu;
@@ -24,6 +25,11 @@ export const MenuPage: React.FC<MenuPageProps> = ({
   );
   const [selectedMealForRating, setSelectedMealForRating] = useState<MealOccurrence | null>(null);
   const [viewMode, setViewMode] = useState<'cards' | 'overview'>('cards');
+  const [timings, setTimings] = useState(mealTimingService.getCurrentTimings());
+
+  React.useEffect(() => {
+    return mealTimingService.subscribeToTimings((t) => setTimings(t));
+  }, []);
 
   const mealsForDate = weekMenu.days[selectedDate] || [];
 
@@ -117,16 +123,16 @@ export const MenuPage: React.FC<MenuPageProps> = ({
                     Day
                   </th>
                   <th className="p-3 border-r border-slate-200 min-w-[180px]">
-                    Breakfast (07:00-10:00)
+                    Breakfast ({timings.breakfast.startTime}–{timings.breakfast.endTime})
                   </th>
                   <th className="p-3 border-r border-slate-200 min-w-[200px]">
-                    Lunch (12:00-15:00)
+                    Lunch ({timings.lunch.startTime}–{timings.lunch.endTime})
                   </th>
                   <th className="p-3 border-r border-slate-200 min-w-[180px]">
-                    Snacks (16:00-18:00)
+                    Snacks ({timings.snacks.startTime}–{timings.snacks.endTime})
                   </th>
                   <th className="p-3 min-w-[200px]">
-                    Dinner (19:00-22:00)
+                    Dinner ({timings.dinner.startTime}–{timings.dinner.endTime})
                   </th>
                 </tr>
               </thead>
