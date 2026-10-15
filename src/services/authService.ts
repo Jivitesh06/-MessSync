@@ -13,20 +13,22 @@ const authListeners = new Set<AuthListener>();
 
 let currentUser: UserProfile | null = null;
 
-// Check for local stored demo admin session
-try {
-  const saved = localStorage.getItem('messsync_admin_session');
-  if (saved) {
-    currentUser = JSON.parse(saved);
-  }
-} catch {}
+// Only in development: load saved demo session if present
+if (!import.meta.env.PROD) {
+  try {
+    const saved = localStorage.getItem('messsync_admin_session');
+    if (saved) {
+      currentUser = JSON.parse(saved);
+    }
+  } catch {}
+}
 
 function notifyListeners() {
   authListeners.forEach((fn) => fn(currentUser));
 }
 
-// Allowed admin emails for Chitkara
-const KNOWN_ADMIN_EMAILS = [
+// Allowed admin emails for Chitkara (strict list, no domain wildcards)
+const AUTHORIZED_ADMIN_EMAILS = [
   'admin@chitkara.edu.in',
   'messadmin@chitkara.edu.in',
   'warden@chitkara.edu.in',
@@ -38,15 +40,18 @@ export const authService = {
       onAuthStateChanged(auth, async (fbUser) => {
         if (fbUser) {
           const profile = await this.resolveUserProfile(fbUser);
-          currentUser = profile;
           if (profile.role === 'admin') {
+            currentUser = profile;
             localStorage.setItem('messsync_admin_session', JSON.stringify(profile));
+          } else {
+            // Non-admin user signed in; do not grant admin session
+            currentUser = profile;
+            localStorage.removeItem('messsync_admin_session');
           }
         } else {
-          // Keep local demo session if firebase is not logged in but local session exists
-          if (!localStorage.getItem('messsync_admin_session')) {
-            currentUser = null;
-          }
+          // Firebase signed out
+          currentUser = null;
+          localStorage.removeItem('messsync_admin_session');
         }
         notifyListeners();
       });
@@ -54,28 +59,36 @@ export const authService = {
   },
 
   async resolveUserProfile(fbUser: FirebaseUser): Promise<UserProfile> {
-    // 1. Check custom claims
     let role: UserRole = 'student';
+
+    // 1. Authoritative check: Firebase Custom Claims (set via Firebase Admin SDK / Cloud Function)
     try {
-      const idTokenResult = await fbUser.getIdTokenResult();
+      const idTokenResult = await fbUser.getIdTokenResult(true);
       if (idTokenResult.claims.admin === true || idTokenResult.claims.role === 'admin') {
         role = 'admin';
       }
-    } catch {}
-
-    // 2. Check known admin email domains / emails
-    if (fbUser.email && (KNOWN_ADMIN_EMAILS.includes(fbUser.email.toLowerCase()) || fbUser.email.endsWith('@chitkara.edu.in'))) {
-      role = 'admin';
+    } catch (err) {
+      console.warn('[authService] Error fetching custom claims:', err);
     }
 
-    // 3. Check Firestore users collection if available
+    // 2. Secondary check: Firestore `users/{uid}` document role
     if (db && role !== 'admin') {
       try {
         const uDoc = await getDoc(doc(db, 'users', fbUser.uid));
         if (uDoc.exists() && uDoc.data().role === 'admin') {
           role = 'admin';
         }
-      } catch {}
+      } catch (err) {
+        console.warn('[authService] Error checking users collection:', err);
+      }
+    }
+
+    // 3. Exact email whitelist fallback for verified university administrators
+    if (role !== 'admin' && fbUser.email) {
+      const normalizedEmail = fbUser.email.toLowerCase().trim();
+      if (AUTHORIZED_ADMIN_EMAILS.includes(normalizedEmail)) {
+        role = 'admin';
+      }
     }
 
     return {
@@ -90,35 +103,49 @@ export const authService = {
   async loginAdmin(email: string, pass: string): Promise<UserProfile> {
     const cleanEmail = email.trim().toLowerCase();
 
-    // 1. If Firebase is configured, perform real Firebase Auth
+    // 1. If Firebase is configured, perform real Firebase Authentication
     if (auth && isFirebaseConfigured()) {
       try {
         const cred = await signInWithEmailAndPassword(auth, cleanEmail, pass);
         const profile = await this.resolveUserProfile(cred.user);
+
+        if (profile.role !== 'admin') {
+          // Reject non-admin accounts and sign out immediately
+          await signOut(auth);
+          throw new Error('Access denied. This account does not possess administrator privileges.');
+        }
+
         currentUser = profile;
         localStorage.setItem('messsync_admin_session', JSON.stringify(profile));
         notifyListeners();
         return profile;
       } catch (err: any) {
-        console.warn('Firebase auth failed:', err.message);
+        console.warn('[authService] Firebase admin authentication failed:', err.message);
         throw new Error(err.message || 'Invalid administrator credentials');
       }
     }
 
-    // 2. Offline / local simulated administrator authentication
-    // Allows immediate evaluation and testing
+    // 2. Production Security Gate: Never allow demo/mock logins in production builds!
+    if (import.meta.env.PROD) {
+      throw new Error(
+        'Production authentication error: Firebase Authentication credentials must be configured in environment variables. Demo logins are disabled in production.'
+      );
+    }
+
+    // 3. Local Development / Evaluation Mode ONLY
+    // Only accessible when running locally in development mode (import.meta.env.PROD === false)
     if (
       cleanEmail === 'admin@chitkara.edu.in' ||
-      cleanEmail === 'messadmin@chitkara.edu.in' ||
-      cleanEmail.includes('admin')
+      cleanEmail === 'messadmin@chitkara.edu.in'
     ) {
-      if (pass.length < 6) {
-        throw new Error('Password must be at least 6 characters');
+      if (pass !== 'admin123') {
+        throw new Error('Invalid administrator password for local development evaluation.');
       }
+
       const profile: UserProfile = {
-        uid: 'admin_local_' + Date.now().toString(36),
+        uid: 'dev_admin_eval',
         email: cleanEmail,
-        displayName: 'Mess Warden Admin',
+        displayName: 'Mess Warden Admin (Dev)',
         role: 'admin',
         createdAt: new Date().toISOString(),
       };

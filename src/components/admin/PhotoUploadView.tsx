@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Upload, Image as ImageIcon, Sparkles, RefreshCw, X, AlertCircle, ArrowRight } from 'lucide-react';
 import { defaultOcrProvider, generateSampleChitkaraNoticePhoto, OcrExtractionResult } from '@/services/ocrService';
+import { storageService } from '@/services/storageService';
 import { getTodayIST, getWeekBoundaries } from '@/utils/dateUtils';
 import { WeekMenu } from '@/types/menu';
 
@@ -61,6 +62,17 @@ export const PhotoUploadView: React.FC<PhotoUploadViewProps> = ({
 
     try {
       const source = selectedFile || previewUrl;
+
+      // Upload to Firebase Storage if an actual file was selected
+      let finalPhotoUrl = previewUrl;
+      if (selectedFile) {
+        try {
+          finalPhotoUrl = await storageService.uploadMenuNoticePhoto(selectedFile, selectedFile.name);
+        } catch (uploadErr) {
+          console.warn('[PhotoUploadView] Storage upload note:', uploadErr);
+        }
+      }
+
       const result = await defaultOcrProvider.extractMenuFromImage(
         source,
         targetMonday,
@@ -71,7 +83,7 @@ export const PhotoUploadView: React.FC<PhotoUploadViewProps> = ({
       );
 
       setIsProcessing(false);
-      onExtractionComplete(result, previewUrl, targetMonday);
+      onExtractionComplete(result, finalPhotoUrl, targetMonday);
     } catch (err: any) {
       console.error(err);
       setIsProcessing(false);

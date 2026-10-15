@@ -7,75 +7,86 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // Administrator verification: requires custom claim 'admin: true' or an explicit 'admin' role in users/{uid}
     function isAdmin() {
       return isAuthenticated() && (
         request.auth.token.admin == true ||
-        request.auth.token.email.matches('.*@chitkara[.]edu[.]in') ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
       );
     }
 
-    // Users Collection
+    // Users Collection: users can read their own profile; admins can read/write
     match /users/{userId} {
       allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
       allow write: if isAdmin();
     }
 
-    // Published Week Menus
-    // Public can read published menus; only admin can create or modify
+    // Published Week Menus: public can read; only verified admins can modify
     match /menuWeeks/{weekId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Historical Published Version Snapshots
+    // Historical Published Version Snapshots: public can read past published history; only admins write
     match /menuVersions/{versionId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Menu Drafts
-    // Only administrators can read or write drafts
+    // Menu Drafts: STRICTLY ADMIN ONLY. Students must never be able to read or write drafts.
     match /menuDrafts/{draftId} {
       allow read, write: if isAdmin();
     }
 
-    // Rating Aggregates
-    // Public can read aggregates; updates allowed with basic validation or admin
+    // Rating Aggregates: Public can read aggregate averages and counts.
+    // Untrusted clients CANNOT write or tamper with aggregates directly.
+    // Updates are handled exclusively by server-side Cloud Functions / Admin SDK transactions.
     match /ratingAggregates/{mealId} {
       allow read: if true;
-      allow create, update: if 
-        request.resource.data.average >= 1.0 &&
-        request.resource.data.average <= 5.0 &&
-        request.resource.data.count >= 0;
-      allow delete: if isAdmin();
+      allow write: if isAdmin();
     }
 
-    // Individual Meal Ratings
+    // Individual Meal Ratings:
+    // Anonymous/authenticated students can submit their own meal rating.
     match /ratings/{ratingId} {
+      // Public can read published reviews; only admins can view flagged or hidden reviews
       allow read: if resource.data.status == 'published' || isAdmin();
-      
-      // Public / students can submit their rating with valid rating constraints (1-5)
+
+      // Create rating: enforce 1 rating per device per meal deterministic docId
       allow create: if
+        ratingId == request.resource.data.mealId + '_' + request.resource.data.deviceId &&
         request.resource.data.rating >= 1 &&
         request.resource.data.rating <= 5 &&
         request.resource.data.deviceId is string &&
-        request.resource.data.deviceId.size() > 5;
-        
-      // Students can edit their own rating; admins can moderate status
-      allow update: if
-        (request.resource.data.rating >= 1 && request.resource.data.rating <= 5) ||
-        isAdmin();
+        request.resource.data.deviceId.size() >= 8 &&
+        request.resource.data.mealId is string &&
+        request.resource.data.status == 'published' &&
+        (!('comment' in request.resource.data) || request.resource.data.comment.size() <= 300);
 
+      // Update rating: student can edit rating/tags/comment for their own device record
+      allow update: if
+        isAdmin() ||
+        (
+          ratingId == resource.data.mealId + '_' + resource.data.deviceId &&
+          request.resource.data.mealId == resource.data.mealId &&
+          request.resource.data.deviceId == resource.data.deviceId &&
+          request.resource.data.createdAt == resource.data.createdAt &&
+          request.resource.data.rating >= 1 &&
+          request.resource.data.rating <= 5 &&
+          request.resource.data.status == resource.data.status &&
+          (!('comment' in request.resource.data) || request.resource.data.comment.size() <= 300)
+        );
+
+      // Only administrators can delete or moderate ratings
       allow delete: if isAdmin();
     }
 
-    // Audit Logs
+    // Audit Logs: Append-only by admins, completely immutable (no updates or deletes)
     match /auditLogs/{logId} {
       allow read: if isAdmin();
-      allow create: if isAdmin() || isAuthenticated();
-      allow update, delete: if false; // Immutable audit log
+      allow create: if isAdmin();
+      allow update, delete: if false;
     }
 
     // App Configuration & Timing Settings

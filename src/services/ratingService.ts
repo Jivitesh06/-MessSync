@@ -175,79 +175,14 @@ export const ratingService = {
 
     let updatedAggregate: RatingAggregate;
 
-    // Use Firestore transaction if connected
+    // When connected to Firestore, write the rating document
+    // (Firestore security rules permit students to write ratings, while Cloud Functions compute aggregates)
     if (db && isFirebaseConfigured()) {
       try {
         const ratingRef = doc(db, 'ratings', docId);
-        const aggRef = doc(db, 'ratingAggregates', params.mealId);
-
-        await runTransaction(db, async (transaction) => {
-          const aggSnap = await transaction.get(aggRef);
-          let currentAgg: RatingAggregate;
-
-          if (aggSnap.exists()) {
-            currentAgg = aggSnap.data() as RatingAggregate;
-          } else {
-            currentAgg = this.getDefaultAggregate(params.mealId, params.date, params.slotId, params.mealName);
-          }
-
-          // Calculate changes
-          const oldRating = existing ? existing.rating : null;
-          const newRating = record.rating;
-
-          const dist = { ...currentAgg.distribution };
-          const tagCounts = { ...currentAgg.tagCounts };
-
-          let newCount = currentAgg.count;
-          let newSum = currentAgg.average * currentAgg.count;
-
-          if (isEdit && oldRating) {
-            // Recalculate average without incrementing count!
-            dist[oldRating as 1|2|3|4|5] = Math.max(0, (dist[oldRating as 1|2|3|4|5] || 1) - 1);
-            dist[newRating as 1|2|3|4|5] = (dist[newRating as 1|2|3|4|5] || 0) + 1;
-            newSum = newSum - oldRating + newRating;
-            
-            // Adjust tag counts
-            if (existing) {
-              existing.tags.forEach((t) => {
-                tagCounts[t] = Math.max(0, (tagCounts[t] || 1) - 1);
-              });
-            }
-          } else {
-            // New rating: increment count
-            newCount += 1;
-            dist[newRating as 1|2|3|4|5] = (dist[newRating as 1|2|3|4|5] || 0) + 1;
-            newSum += newRating;
-          }
-
-          record.tags.forEach((t) => {
-            tagCounts[t] = (tagCounts[t] || 0) + 1;
-          });
-
-          const newAverage = newCount > 0 ? Number((newSum / newCount).toFixed(2)) : newRating;
-
-          currentAgg = {
-            ...currentAgg,
-            average: newAverage,
-            count: newCount,
-            distribution: dist,
-            tagCounts,
-            lastUpdated: nowIso,
-          };
-
-          transaction.set(ratingRef, record);
-          transaction.set(aggRef, currentAgg);
-          updatedAggregate = currentAgg;
-        });
-
-        // @ts-ignore
-        if (updatedAggregate) {
-          await idbStorage.saveRatingAggregate(updatedAggregate);
-          notifyLocalAggListeners(params.mealId, updatedAggregate);
-          return { success: true, isEdit, isOfflinePending: false, aggregate: updatedAggregate };
-        }
+        await setDoc(ratingRef, record);
       } catch (err) {
-        console.warn('[ratingService] Firestore transaction failed, falling back to local aggregate:', err);
+        console.warn('[ratingService] Failed to write rating to Firestore:', err);
       }
     }
 
@@ -318,34 +253,7 @@ export const ratingService = {
       }
     }
 
-    return localReviewsStore.get(mealId) || [
-      {
-        id: `mock-rev-1`,
-        mealId,
-        date: mealId.split('-').slice(0, 3).join('-'),
-        slotId: mealId.split('-')[3] || 'lunch',
-        rating: 5,
-        tags: ['taste', 'freshness'],
-        comment: 'Dal makhani was exceptionally good today, hot and rich!',
-        deviceId: 'anon_student_1',
-        createdAt: new Date(Date.now() - 3600000).toISOString(),
-        updatedAt: new Date(Date.now() - 3600000).toISOString(),
-        status: 'published',
-      },
-      {
-        id: `mock-rev-2`,
-        mealId,
-        date: mealId.split('-').slice(0, 3).join('-'),
-        slotId: mealId.split('-')[3] || 'lunch',
-        rating: 4,
-        tags: ['temperature', 'quantity'],
-        comment: 'Freshly served rotis right from tandoor. Good service.',
-        deviceId: 'anon_student_2',
-        createdAt: new Date(Date.now() - 7200000).toISOString(),
-        updatedAt: new Date(Date.now() - 7200000).toISOString(),
-        status: 'published',
-      },
-    ];
+    return localReviewsStore.get(mealId) || [];
   },
 
   /**
@@ -418,15 +326,15 @@ export const ratingService = {
       date,
       slotId,
       mealName,
-      average: 4.3,
-      count: 24,
-      distribution: { 1: 1, 2: 1, 3: 3, 4: 9, 5: 10 },
+      average: 0,
+      count: 0,
+      distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
       tagCounts: {
-        taste: 18,
-        freshness: 14,
-        variety: 11,
-        quantity: 16,
-        temperature: 15,
+        taste: 0,
+        freshness: 0,
+        variety: 0,
+        quantity: 0,
+        temperature: 0,
       },
       lastUpdated: new Date().toISOString(),
     };

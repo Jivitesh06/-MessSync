@@ -52,9 +52,9 @@ export const AdminPage: React.FC<AdminPageProps> = ({
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(authService.getCurrentUser());
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
 
-  // Login form state
-  const [email, setEmail] = useState<string>('admin@chitkara.edu.in');
-  const [password, setPassword] = useState<string>('admin123');
+  // Login form state (empty defaults for security)
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
 
@@ -230,15 +230,27 @@ export const AdminPage: React.FC<AdminPageProps> = ({
             </button>
           </form>
 
-          {/* Demo Helper Button */}
-          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-center space-y-1">
-            <p className="text-[11px] font-semibold text-slate-500">
-              Evaluation Demo Credentials:
-            </p>
-            <p className="text-xs font-bold text-slate-700">
-              admin@chitkara.edu.in / admin123
-            </p>
-          </div>
+          {/* Demo Helper Button (Development mode only) */}
+          {!import.meta.env.PROD && (
+            <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200 text-center space-y-1">
+              <p className="text-[11px] font-bold text-amber-800">
+                Local Dev Evaluation Credentials:
+              </p>
+              <p className="text-xs font-mono font-semibold text-amber-900">
+                admin@chitkara.edu.in / admin123
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('admin@chitkara.edu.in');
+                  setPassword('admin123');
+                }}
+                className="text-[11px] font-bold text-chitkara underline hover:text-chitkara-dark"
+              >
+                Auto-fill for Dev Testing
+              </button>
+            </div>
+          )}
 
           <div className="text-center pt-2">
             <button

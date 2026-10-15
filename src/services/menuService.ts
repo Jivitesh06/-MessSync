@@ -47,15 +47,17 @@ export const menuService = {
         const snapshot = await getDoc(docRef);
         if (snapshot.exists()) {
           const remoteMenu = snapshot.data() as WeekMenu;
-          await idbStorage.saveWeekMenu(remoteMenu);
-          return remoteMenu;
+          if (remoteMenu.isPublished) {
+            await idbStorage.saveWeekMenu(remoteMenu);
+            return remoteMenu;
+          }
         }
       } catch (err) {
         console.warn('[menuService] Firestore fetch error, falling back to cache:', err);
       }
     }
 
-    if (cached) {
+    if (cached && cached.isPublished) {
       return cached;
     }
 
@@ -87,8 +89,10 @@ export const menuService = {
         firestoreUnsub = onSnapshot(docRef, (snap) => {
           if (snap.exists()) {
             const data = snap.data() as WeekMenu;
-            idbStorage.saveWeekMenu(data);
-            callback(data);
+            if (data.isPublished) {
+              idbStorage.saveWeekMenu(data);
+              callback(data);
+            }
           }
         }, (err) => {
           console.warn('[menuService] onSnapshot listener error:', err);

@@ -457,9 +457,9 @@ export function buildWeekMenuForDate(mondayDateStr: string): WeekMenu {
           reviewNote: d.reviewNote,
         })),
         ratingSummary: {
-          average: tm.slotId === 'dinner' ? 4.4 : tm.slotId === 'lunch' ? 4.2 : tm.slotId === 'breakfast' ? 4.5 : 4.1,
-          count: tm.slotId === 'dinner' ? 38 : tm.slotId === 'lunch' ? 52 : tm.slotId === 'breakfast' ? 46 : 29,
-          distribution: { 1: 1, 2: 2, 3: 5, 4: 16, 5: 28 },
+          average: 0,
+          count: 0,
+          distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
         },
         updatedAt: new Date().toISOString(),
       };

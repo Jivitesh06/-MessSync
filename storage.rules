@@ -7,10 +7,7 @@ service firebase.storage {
     }
 
     function isAdmin() {
-      return isAuthenticated() && (
-        request.auth.token.admin == true ||
-        request.auth.token.email.matches('.*@chitkara[.]edu[.]in')
-      );
+      return isAuthenticated() && request.auth.token.admin == true;
     }
 
     // Menu notices and uploaded photographs
@@ -18,8 +15,8 @@ service firebase.storage {
       // Public students can view published menu photographs
       allow read: if true;
 
-      // Only administrators can upload menu notice images
-      // Restricted to images under 15MB
+      // Only verified administrators can upload or delete menu notice images
+      // Restricted to images under 15MB with valid image MIME type
       allow write: if isAdmin()
         && request.resource.contentType.matches('image/.*')
         && request.resource.size < 15 * 1024 * 1024;
