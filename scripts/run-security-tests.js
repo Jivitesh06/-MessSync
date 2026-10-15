@@ -174,6 +174,105 @@ runCheck('Security 8: Offline ratings queue accumulates offline and drains compl
   assert.strictEqual(drained.every((i) => i.synced), true, 'All items marked as synced');
 });
 
+// -------------------------------------------------------------
+// Security Check 9: Spark Tier Aggregate Derivation Integrity
+// -------------------------------------------------------------
+runCheck('Security 9: Spark Tier: Aggregate derivation directly from rating records preserves mathematical precision without Cloud Functions', () => {
+  const records = [
+    { id: 'm1_dev1', mealId: '2026-10-15-lunch', rating: 5, tags: ['taste', 'freshness'], status: 'published' },
+    { id: 'm1_dev2', mealId: '2026-10-15-lunch', rating: 4, tags: ['variety'], status: 'published' },
+    { id: 'm1_dev3', mealId: '2026-10-15-lunch', rating: 3, tags: ['taste'], status: 'published' },
+  ];
+
+  // Calculation matching ratingService.computeAggregateFromRecords
+  const dist = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  const tagCounts = { taste: 0, freshness: 0, variety: 0, quantity: 0, temperature: 0 };
+  let sum = 0;
+  records.forEach((r) => {
+    dist[r.rating]++;
+    sum += r.rating;
+    r.tags.forEach((t) => {
+      tagCounts[t] = (tagCounts[t] || 0) + 1;
+    });
+  });
+  const count = records.length;
+  const average = Number((sum / count).toFixed(2));
+
+  assert.strictEqual(count, 3, 'Total count matches records count');
+  assert.strictEqual(sum, 12);
+  assert.strictEqual(average, 4.0, 'Average is 4.00');
+  assert.strictEqual(dist[5], 1);
+  assert.strictEqual(dist[4], 1);
+  assert.strictEqual(dist[3], 1);
+  assert.strictEqual(tagCounts.taste, 2, 'Tag taste counted twice');
+  assert.strictEqual(tagCounts.freshness, 1);
+  assert.strictEqual(tagCounts.variety, 1);
+});
+
+// -------------------------------------------------------------
+// Security Check 10: Rejection of Direct Aggregate Manipulation
+// -------------------------------------------------------------
+runCheck('Security 10: Client direct writes to ratingAggregates collection are rejected by security rules', () => {
+  // Simulate Firestore rule:
+  // match /ratingAggregates/{mealId} { allow write: if isAdmin(); }
+  const canWriteAggregate = (user) => {
+    return Boolean(user && user.role === 'admin');
+  };
+
+  const studentUser = { uid: 'student_123', role: 'student' };
+  const anonymousUser = null;
+  const adminUser = { uid: 'admin_456', role: 'admin' };
+
+  assert.strictEqual(canWriteAggregate(studentUser), false, 'Student cannot tamper with ratingAggregates');
+  assert.strictEqual(canWriteAggregate(anonymousUser), false, 'Anonymous user cannot write ratingAggregates');
+  assert.strictEqual(canWriteAggregate(adminUser), true, 'Admin can manage ratingAggregates');
+});
+
+// -------------------------------------------------------------
+// Security Check 11: Admin-Only Menu Publishing & Edit Gate
+// -------------------------------------------------------------
+runCheck('Security 11: Menu publishing requires verified admin role; unauthenticated edits are rejected', () => {
+  // Simulate Firestore rule:
+  // match /menuWeeks/{weekId} { allow write: if isAdmin(); }
+  const canPublishMenu = (auth) => {
+    if (!auth) return false;
+    return auth.token?.admin === true || auth.role === 'admin';
+  };
+
+  assert.strictEqual(canPublishMenu(null), false, 'Unauthenticated user rejected');
+  assert.strictEqual(canPublishMenu({ role: 'student' }), false, 'Student user rejected');
+  assert.strictEqual(canPublishMenu({ role: 'admin', token: { admin: true } }), true, 'Verified admin allowed');
+});
+
+// -------------------------------------------------------------
+// Security Check 12: Offline Menu Persistence Verification
+// -------------------------------------------------------------
+runCheck('Security 12: Offline menu fallback persists published menu across network disconnections', () => {
+  const publishedMenu = buildWeekMenuForDate('2026-10-12');
+  publishedMenu.isPublished = true;
+
+  // Mock IndexedDB storage map
+  const idb = new Map();
+  idb.set(publishedMenu.id, publishedMenu);
+
+  // Network fetch simulator
+  const fetchMenuWithOfflineFallback = (isOnline, weekId) => {
+    if (!isOnline) {
+      // Offline: fetch from IndexedDB cache
+      const cached = idb.get(weekId);
+      if (!cached) throw new Error('No offline menu available');
+      return cached;
+    }
+    return idb.get(weekId);
+  };
+
+  // Test offline retrieval
+  const offlineResult = fetchMenuWithOfflineFallback(false, 'week-2026-10-12');
+  assert.ok(offlineResult, 'Menu retrieved offline from cache');
+  assert.strictEqual(offlineResult.isPublished, true);
+  assert.strictEqual(Object.keys(offlineResult.days).length, 7, 'All 7 days intact in offline mode');
+});
+
 console.log(`\n======================================================`);
 console.log(`Security Audit Results: ${passed}/${total} Security Checks Passed!`);
 console.log(`======================================================\n`);

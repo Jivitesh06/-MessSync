@@ -3,9 +3,10 @@ import { storage, isFirebaseConfigured } from './firebase';
 
 export const storageService = {
   /**
-   * Uploads a mess notice photograph to Firebase Storage under `menuNotices/`.
+   * Processes a mess notice photograph locally for in-browser OCR.
+   * Under the Firebase Spark Free-Tier plan, photographs remain local in browser memory
+   * (via Object URLs) and are not uploaded to Cloud Storage, avoiding paid plan upgrades.
    * Enforces 15MB file size limit and valid image MIME type.
-   * Returns persistent HTTPS download URL (or local URL if running in offline mode).
    */
   async uploadMenuNoticePhoto(
     fileOrBlob: File | Blob,
@@ -21,34 +22,17 @@ export const storageService = {
       throw new Error('Invalid file format. Only image files (JPG, PNG, WebP) are permitted.');
     }
 
-    // 2. Upload to Firebase Storage if configured
-    if (storage && isFirebaseConfigured()) {
-      try {
-        const cleanName = suggestedName.replace(/[^a-zA-Z0-9._-]/g, '_');
-        const filename = `${Date.now()}_${cleanName}`;
-        const storageRef = ref(storage, `menuNotices/${filename}`);
+    // 2. Spark Free-Tier: In-browser object URL for client-side Tesseract.js OCR
+    const localUrl = URL.createObjectURL(fileOrBlob);
+    console.info('[storageService] Spark Free-Tier: Processing photo locally in browser memory without cloud upload.');
+    return localUrl;
+  },
 
-        const uploadResult = await uploadBytes(storageRef, fileOrBlob, {
-          contentType,
-          customMetadata: {
-            uploadedAt: new Date().toISOString(),
-            app: 'MessSync',
-          },
-        });
-
-        const downloadUrl = await getDownloadURL(uploadResult.ref);
-        console.log('[storageService] Photo uploaded successfully:', downloadUrl);
-        return downloadUrl;
-      } catch (err: any) {
-        console.warn('[storageService] Firebase Storage upload failed, falling back to local URL:', err);
-      }
-    }
-
-    // 3. Fallback: local blob or data URL
-    if (fileOrBlob instanceof File) {
-      return URL.createObjectURL(fileOrBlob);
-    }
-
-    return URL.createObjectURL(fileOrBlob);
+  /**
+   * Indicates whether persistent Firebase Cloud Storage is active.
+   * Always false under the Spark plan.
+   */
+  isCloudStorageEnabled(): boolean {
+    return false;
   },
 };

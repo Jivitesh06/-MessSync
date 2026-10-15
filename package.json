@@ -8,7 +8,10 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "./node_modules/.bin/esbuild scripts/run-tests.js --bundle --platform=node --outfile=scripts/run-tests.bundle.cjs --alias:@=./src && node scripts/run-tests.bundle.cjs && ./node_modules/.bin/esbuild scripts/run-security-tests.js --bundle --platform=node --outfile=scripts/run-security-tests.bundle.cjs --alias:@=./src && node scripts/run-security-tests.bundle.cjs",
-    "test:security": "./node_modules/.bin/esbuild scripts/run-security-tests.js --bundle --platform=node --outfile=scripts/run-security-tests.bundle.cjs --alias:@=./src && node scripts/run-security-tests.bundle.cjs"
+    "test:security": "./node_modules/.bin/esbuild scripts/run-security-tests.js --bundle --platform=node --outfile=scripts/run-security-tests.bundle.cjs --alias:@=./src && node scripts/run-security-tests.bundle.cjs",
+    "deploy": "npm test && npm run build && firebase deploy --only firestore,hosting",
+    "deploy:hosting": "npm run build && firebase deploy --only hosting",
+    "deploy:firestore": "firebase deploy --only firestore"
   },
   "dependencies": {
     "clsx": "^2.1.1",

@@ -37,7 +37,57 @@ const localReviewsStore = new Map<string, RatingRecord[]>();
 
 export const ratingService = {
   /**
+   * Derives a mathematically exact, unforgeable RatingAggregate from individual rating documents.
+   * Eliminates the need for Cloud Functions under the Firebase Spark Free-Tier plan.
+   */
+  computeAggregateFromRecords(mealId: string, records: RatingRecord[], mealName: string = 'Meal'): RatingAggregate {
+    const [date, slotId] = [
+      mealId.split('-').slice(0, 3).join('-'),
+      mealId.split('-')[3] || 'meal',
+    ];
+    const dist: Record<1 | 2 | 3 | 4 | 5, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    const tagCounts: Record<FeedbackTag, number> = {
+      taste: 0,
+      freshness: 0,
+      variety: 0,
+      quantity: 0,
+      temperature: 0,
+    };
+    let sum = 0;
+
+    records.forEach((r) => {
+      const star = Math.max(1, Math.min(5, Math.round(r.rating))) as 1 | 2 | 3 | 4 | 5;
+      dist[star] = (dist[star] || 0) + 1;
+      sum += star;
+      if (Array.isArray(r.tags)) {
+        r.tags.forEach((tag) => {
+          if (tag in tagCounts) {
+            tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+          }
+        });
+      }
+    });
+
+    const count = records.length;
+    const average = count > 0 ? Number((sum / count).toFixed(2)) : 0;
+
+    return {
+      mealId,
+      date,
+      slotId,
+      mealName,
+      average,
+      count,
+      distribution: dist,
+      tagCounts,
+      lastUpdated: new Date().toISOString(),
+    };
+  },
+
+  /**
    * Subscribes to real-time rating aggregates for a specific meal occurrence.
+   * In Firebase Spark Free-Tier mode, this listens to authentic individual rating documents
+   * and computes aggregates deterministically without requiring Cloud Functions.
    */
   subscribeToRating(mealId: string, callback: AggregateListener): Unsubscribe {
     if (!localAggregateListeners.has(mealId)) {
@@ -48,17 +98,50 @@ export const ratingService = {
     let firestoreUnsub: Unsubscribe | null = null;
 
     if (db && isFirebaseConfigured()) {
+      const firestoreDb = db;
       try {
-        const aggRef = doc(db, 'ratingAggregates', mealId);
-        firestoreUnsub = onSnapshot(aggRef, (snap) => {
-          if (snap.exists()) {
-            const data = snap.data() as RatingAggregate;
-            idbStorage.saveRatingAggregate(data);
-            callback(data);
+        const ratingsQuery = query(
+          collection(firestoreDb, 'ratings'),
+          where('mealId', '==', mealId),
+          where('status', '==', 'published')
+        );
+
+        firestoreUnsub = onSnapshot(
+          ratingsQuery,
+          (snap) => {
+            if (!snap.empty) {
+              const records = snap.docs.map((d) => d.data() as RatingRecord);
+              const computed = this.computeAggregateFromRecords(mealId, records);
+              idbStorage.saveRatingAggregate(computed);
+              callback(computed);
+              notifyLocalAggListeners(mealId, computed);
+            } else {
+              // Check if legacy or admin-seeded aggregate exists
+              getDoc(doc(firestoreDb, 'ratingAggregates', mealId))
+                .then((aggSnap) => {
+                  if (aggSnap.exists()) {
+                    const data = aggSnap.data() as RatingAggregate;
+                    idbStorage.saveRatingAggregate(data);
+                    callback(data);
+                  } else {
+                    const def = this.getDefaultAggregate(
+                      mealId,
+                      mealId.split('-').slice(0, 3).join('-'),
+                      mealId.split('-')[3] || 'meal',
+                      'Meal'
+                    );
+                    callback(def);
+                  }
+                })
+                .catch(() => {});
+            }
+          },
+          (err) => {
+            console.warn('[ratingService] Firestore rating listener note:', err);
           }
-        });
+        );
       } catch (err) {
-        console.warn('[ratingService] Error setting up aggregate listener:', err);
+        console.warn('[ratingService] Error setting up rating listener:', err);
       }
     }
 

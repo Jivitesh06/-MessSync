@@ -103,6 +103,17 @@ export const PhotoUploadView: React.FC<PhotoUploadViewProps> = ({
         <p className="text-xs sm:text-sm text-slate-500 mt-1">
           Upload a photograph of the printed hostel mess notice board. Our OCR engine will scan dishes and assign them to meal categories.
         </p>
+
+        {/* Spark Free-Tier Notice */}
+        <div className="mt-3 p-3 rounded-xl bg-amber-50/80 border border-amber-200/90 text-amber-900 text-xs flex items-start gap-2.5">
+          <Sparkles className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+          <div className="space-y-0.5">
+            <span className="font-bold text-amber-950">Firebase Spark Free-Tier Active:</span>
+            <p className="text-amber-800 leading-relaxed">
+              Photographs are processed 100% locally in your browser memory via Tesseract.js. Images are not uploaded or backed up to Cloud Storage, keeping the application entirely free with zero cloud storage costs.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Target Week Selector */}
