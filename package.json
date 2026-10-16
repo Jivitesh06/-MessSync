@@ -11,7 +11,9 @@
     "test:security": "./node_modules/.bin/esbuild scripts/run-security-tests.js --bundle --platform=node --outfile=scripts/run-security-tests.bundle.cjs --alias:@=./src && node scripts/run-security-tests.bundle.cjs",
     "deploy": "npm test && npm run build && firebase deploy --only firestore,hosting",
     "deploy:hosting": "npm run build && firebase deploy --only hosting",
-    "deploy:firestore": "firebase deploy --only firestore"
+    "deploy:firestore": "firebase deploy --only firestore",
+    "create-admin": "./node_modules/.bin/esbuild scripts/create-admin.ts --bundle --platform=node --outfile=scripts/create-admin.cjs --alias:@=./src && node scripts/create-admin.cjs",
+    "seed": "./node_modules/.bin/esbuild scripts/seed-firestore.ts --bundle --platform=node --outfile=scripts/seed-firestore.cjs --alias:@=./src && node scripts/seed-firestore.cjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",

@@ -49,8 +49,8 @@ export const RatingModerationView: React.FC<RatingModerationViewProps> = ({
     setTimeout(() => setActionNotice(null), 3000);
   };
 
-  const agg = currentMeal?.ratingSummary || { average: 4.3, count: 24, distribution: { 1: 1, 2: 1, 3: 3, 4: 9, 5: 10 } };
-  const dist = agg.distribution || { 1: 1, 2: 1, 3: 3, 4: 9, 5: 10 };
+  const agg = currentMeal?.ratingSummary || { average: 0, count: 0, distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } };
+  const dist = agg.distribution || { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
   const totalInDist = Object.values(dist).reduce((a, b) => a + b, 0) || 1;
 
   return (
@@ -85,11 +85,15 @@ export const RatingModerationView: React.FC<RatingModerationViewProps> = ({
           onChange={(e) => setSelectedMealId(e.target.value)}
           className="w-full p-2.5 rounded-xl border border-slate-300 text-sm font-semibold text-slate-800 bg-white"
         >
-          {allMeals.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.dayOfWeek} {m.name} ({formatFriendlyDate(m.date)}) • {m.ratingSummary?.average?.toFixed(1) || '4.2'}★ ({m.ratingSummary?.count || 24} ratings)
-            </option>
-          ))}
+          {allMeals.map((m) => {
+            const mAvg = m.ratingSummary?.average ?? 0;
+            const mCount = m.ratingSummary?.count ?? 0;
+            return (
+              <option key={m.id} value={m.id}>
+                {m.dayOfWeek} {m.name} ({formatFriendlyDate(m.date)}) • {mCount > 0 ? `${mAvg.toFixed(1)}★ (${mCount} ratings)` : 'No ratings yet'}
+              </option>
+            );
+          })}
         </select>
       </div>
 

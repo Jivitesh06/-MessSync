@@ -23,16 +23,22 @@ export const RatingsPage: React.FC<RatingsPageProps> = ({ weekMenu }) => {
     ? allMeals
     : allMeals.filter((m) => m.slotId === selectedSlot);
 
+  // Derive authentic ratings without mock fallbacks
+  const ratedMeals = allMeals.filter((m) => (m.ratingSummary?.count ?? 0) > 0);
+  const totalRatingsCampus = ratedMeals.reduce((acc, m) => acc + (m.ratingSummary?.count ?? 0), 0);
+  const totalScoreSum = ratedMeals.reduce(
+    (acc, m) => acc + (m.ratingSummary?.average ?? 0) * (m.ratingSummary?.count ?? 0),
+    0
+  );
+  const campusOverallAvg =
+    totalRatingsCampus > 0 ? (totalScoreSum / totalRatingsCampus).toFixed(2) : '—';
+
   // Sort by rating
-  const sortedByRating = [...filteredMeals].sort((a, b) => {
-    const avgA = a.ratingSummary?.average || 4.0;
-    const avgB = b.ratingSummary?.average || 4.0;
-    return avgB - avgA;
-  });
+  const sortedByRating = [...filteredMeals]
+    .filter((m) => (m.ratingSummary?.count ?? 0) > 0)
+    .sort((a, b) => (b.ratingSummary?.average ?? 0) - (a.ratingSummary?.average ?? 0));
 
   const topMeals = sortedByRating.slice(0, 5);
-  const totalRatingsCampus = allMeals.reduce((acc, m) => acc + (m.ratingSummary?.count || 25), 0);
-  const campusOverallAvg = (allMeals.reduce((acc, m) => acc + (m.ratingSummary?.average || 4.2), 0) / (allMeals.length || 1)).toFixed(2);
 
   return (
     <div className="space-y-6 pb-20">
@@ -104,60 +110,70 @@ export const RatingsPage: React.FC<RatingsPageProps> = ({ weekMenu }) => {
         </div>
 
         <div className="space-y-2.5">
-          {topMeals.map((meal, idx) => {
-            const avg = meal.ratingSummary?.average || 4.2;
-            const count = meal.ratingSummary?.count || 24;
+          {topMeals.length === 0 ? (
+            <div className="bg-white rounded-xl p-8 border border-slate-200/80 text-center space-y-2">
+              <Award className="w-8 h-8 text-slate-300 mx-auto" />
+              <p className="text-sm font-semibold text-slate-700">No student ratings recorded yet</p>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                Ratings will appear here in real-time as Chitkara students rate meals from the home screen.
+              </p>
+            </div>
+          ) : (
+            topMeals.map((meal, idx) => {
+              const avg = meal.ratingSummary?.average ?? 0;
+              const count = meal.ratingSummary?.count ?? 0;
 
-            return (
-              <div
-                key={meal.id}
-                className="bg-white rounded-xl p-4 border border-slate-200/90 shadow-2xs hover:border-slate-300 transition-all flex items-center justify-between gap-3"
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-7 h-7 rounded-full flex items-center justify-center font-black text-xs shrink-0 ${
-                      idx === 0
-                        ? 'bg-amber-100 text-amber-700 border border-amber-300'
-                        : idx === 1
-                        ? 'bg-slate-100 text-slate-700 border border-slate-300'
-                        : idx === 2
-                        ? 'bg-orange-100 text-orange-700 border border-orange-300'
-                        : 'bg-slate-50 text-slate-400'
-                    }`}
-                  >
-                    #{idx + 1}
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-slate-900 leading-tight">
-                      {meal.dayOfWeek} {meal.name}
-                    </h4>
-                    <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">
-                      {meal.dishes.map((d) => d.name).join(', ')}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 shrink-0">
-                  <div className="text-right">
-                    <div className="flex items-center gap-1 text-sm font-extrabold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
-                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                      <span>{avg.toFixed(1)}</span>
+              return (
+                <div
+                  key={meal.id}
+                  className="bg-white rounded-xl p-4 border border-slate-200/90 shadow-2xs hover:border-slate-300 transition-all flex items-center justify-between gap-3"
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-7 h-7 rounded-full flex items-center justify-center font-black text-xs shrink-0 ${
+                        idx === 0
+                          ? 'bg-amber-100 text-amber-700 border border-amber-300'
+                          : idx === 1
+                          ? 'bg-slate-100 text-slate-700 border border-slate-300'
+                          : idx === 2
+                          ? 'bg-orange-100 text-orange-700 border border-orange-300'
+                          : 'bg-slate-50 text-slate-400'
+                      }`}
+                    >
+                      #{idx + 1}
                     </div>
-                    <span className="text-[10px] text-slate-400 block mt-0.5">
-                      {count} ratings
-                    </span>
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-900 leading-tight">
+                        {meal.dayOfWeek} {meal.name}
+                      </h4>
+                      <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">
+                        {meal.dishes.map((d) => d.name).join(', ')}
+                      </p>
+                    </div>
                   </div>
 
-                  <button
-                    onClick={() => setSelectedMealForRating(meal)}
-                    className="px-2.5 py-1 text-xs font-semibold text-chitkara bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
-                  >
-                    Rate
-                  </button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="text-right">
+                      <div className="flex items-center gap-1 text-sm font-extrabold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                        <span>{avg.toFixed(1)}</span>
+                      </div>
+                      <span className="text-[10px] text-slate-400 block mt-0.5">
+                        {count} ratings
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={() => setSelectedMealForRating(meal)}
+                      className="px-2.5 py-1 text-xs font-semibold text-chitkara bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                    >
+                      Rate
+                    </button>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
       </section>
 

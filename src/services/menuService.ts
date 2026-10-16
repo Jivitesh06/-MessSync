@@ -16,6 +16,7 @@ import { idbStorage } from './idbStorage';
 import { WeekMenu, MenuDraft, MenuVersion, MealOccurrence } from '@/types/menu';
 import { buildWeekMenuForDate, CHITKARA_WEEK_TEMPLATE } from '@/data/chitkaraInitialMenu';
 import { getWeekBoundaries } from '@/utils/dateUtils';
+import { normalizeWeekMenuTimings } from './mealTimingService';
 
 // In-memory event bus for local reactive updates when Firestore is offline or in local mode
 type MenuListener = (menu: WeekMenu) => void;
@@ -37,10 +38,7 @@ export const menuService = {
     const { monday } = getWeekBoundaries(targetDateStr);
     const weekId = `week-${monday}`;
 
-    // 1. Try local IndexedDB first for instant response
-    const cached = await idbStorage.getWeekMenu(weekId);
-
-    // 2. If Firebase is active and connected, query Firestore
+    // 1. If Firebase is active and connected, query Firestore first for latest live data
     if (db && isFirebaseConfigured()) {
       try {
         const docRef = doc(db, 'menuWeeks', weekId);
@@ -48,8 +46,9 @@ export const menuService = {
         if (snapshot.exists()) {
           const remoteMenu = snapshot.data() as WeekMenu;
           if (remoteMenu.isPublished) {
-            await idbStorage.saveWeekMenu(remoteMenu);
-            return remoteMenu;
+            const normalized = normalizeWeekMenuTimings(remoteMenu);
+            await idbStorage.saveWeekMenu(normalized);
+            return normalized;
           }
         }
       } catch (err) {
@@ -57,12 +56,15 @@ export const menuService = {
       }
     }
 
+    // 2. Try local IndexedDB
+    const cached = await idbStorage.getWeekMenu(weekId);
     if (cached && cached.isPublished) {
-      return cached;
+      const normalized = normalizeWeekMenuTimings(cached);
+      return normalized;
     }
 
     // 3. Fallback: Generate the structured Chitkara menu for this week & cache it
-    const initial = buildWeekMenuForDate(monday);
+    const initial = normalizeWeekMenuTimings(buildWeekMenuForDate(monday));
     await idbStorage.saveWeekMenu(initial);
     return initial;
   },
@@ -90,8 +92,9 @@ export const menuService = {
           if (snap.exists()) {
             const data = snap.data() as WeekMenu;
             if (data.isPublished) {
-              idbStorage.saveWeekMenu(data);
-              callback(data);
+              const normalized = normalizeWeekMenuTimings(data);
+              idbStorage.saveWeekMenu(normalized);
+              callback(normalized);
             }
           }
         }, (err) => {
@@ -121,13 +124,13 @@ export const menuService = {
     const newVersion = (weekMenu.version || 1) + 1;
     const nowIso = new Date().toISOString();
 
-    const publishedMenu: WeekMenu = {
+    const publishedMenu: WeekMenu = normalizeWeekMenuTimings({
       ...weekMenu,
       version: newVersion,
       isPublished: true,
       publishedAt: nowIso,
       publishedBy: adminEmail,
-    };
+    });
 
     // 1. Update IndexedDB immediately
     await idbStorage.saveWeekMenu(publishedMenu);

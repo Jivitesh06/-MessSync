@@ -7,18 +7,33 @@ import {
 } from '@/config/mealTimings';
 import { idbStorage } from './idbStorage';
 
-const STORAGE_KEY = 'messsync_meal_timings';
+import { MealOccurrence, WeekMenu } from '@/types/menu';
+
+const STORAGE_KEY = 'messsync_meal_timings_v3';
 
 type TimingsListener = (timings: MealTimingsConfig) => void;
 const listeners = new Set<TimingsListener>();
 
 let cachedTimings: MealTimingsConfig = DEFAULT_CHITKARA_TIMINGS;
 
-// Load local cache if present
+// Purge legacy local storage cache and load v3 cache if valid
 try {
+  localStorage.removeItem('messsync_meal_timings');
+  localStorage.removeItem('messsync_meal_timings_v2');
   const local = localStorage.getItem(STORAGE_KEY);
   if (local) {
-    cachedTimings = { ...DEFAULT_CHITKARA_TIMINGS, ...JSON.parse(local) };
+    const parsed = JSON.parse(local) as Partial<MealTimingsConfig>;
+    // Discard any stale config containing outdated timings (09:30, 21:45, 12:30)
+    const isOutdated =
+      parsed.breakfast?.endTime === '09:30' ||
+      parsed.lunch?.startTime === '12:30' ||
+      parsed.dinner?.endTime === '21:45';
+    if (isOutdated) {
+      localStorage.removeItem(STORAGE_KEY);
+      cachedTimings = DEFAULT_CHITKARA_TIMINGS;
+    } else {
+      cachedTimings = { ...DEFAULT_CHITKARA_TIMINGS, ...parsed };
+    }
   }
 } catch {}
 
@@ -28,6 +43,46 @@ function notifyListeners(timings: MealTimingsConfig) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(timings));
   } catch {}
   listeners.forEach((fn) => fn(timings));
+}
+
+/**
+ * Normalizes an individual MealOccurrence to ensure its startTime and endTime
+ * strictly follow the official configured meal timings.
+ */
+export function normalizeMealTimings(
+  meal: MealOccurrence,
+  timings: MealTimingsConfig = cachedTimings
+): MealOccurrence {
+  if (!meal) return meal;
+  const slotKey = meal.slotId as keyof MealTimingsConfig;
+  const slotTiming = timings[slotKey];
+  if (slotTiming) {
+    return {
+      ...meal,
+      startTime: slotTiming.startTime,
+      endTime: slotTiming.endTime,
+      name: slotTiming.name || meal.name,
+    };
+  }
+  return meal;
+}
+
+/**
+ * Recursively normalizes all meal occurrences in a WeekMenu against official timings.
+ */
+export function normalizeWeekMenuTimings(
+  weekMenu: WeekMenu,
+  timings: MealTimingsConfig = cachedTimings
+): WeekMenu {
+  if (!weekMenu || !weekMenu.days) return weekMenu;
+  const normalizedDays: Record<string, MealOccurrence[]> = {};
+  for (const [dateStr, meals] of Object.entries(weekMenu.days)) {
+    normalizedDays[dateStr] = (meals || []).map((m) => normalizeMealTimings(m, timings));
+  }
+  return {
+    ...weekMenu,
+    days: normalizedDays,
+  };
 }
 
 export const mealTimingService = {

@@ -32,18 +32,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     0
   );
 
-  const totalRatings = allMeals.reduce((acc, m) => acc + (m.ratingSummary?.count || 20), 0);
-  const avgRating = (
-    allMeals.reduce((acc, m) => acc + (m.ratingSummary?.average || 4.2), 0) /
-    (allMeals.length || 1)
-  ).toFixed(2);
+  const totalRatings = allMeals.reduce((acc, m) => acc + (m.ratingSummary?.count ?? 0), 0);
+  const totalScoreSum = allMeals.reduce(
+    (acc, m) => acc + (m.ratingSummary?.average ?? 0) * (m.ratingSummary?.count ?? 0),
+    0
+  );
+  const avgRating = totalRatings > 0 ? (totalScoreSum / totalRatings).toFixed(2) : '—';
 
-  // Highest & lowest rated meals
-  const sorted = [...allMeals].sort(
+  // Highest & lowest rated meals (only considering meals that have at least 1 rating)
+  const ratedMeals = allMeals.filter((m) => (m.ratingSummary?.count ?? 0) > 0);
+  const sorted = [...ratedMeals].sort(
     (a, b) => (b.ratingSummary?.average || 0) - (a.ratingSummary?.average || 0)
   );
   const highestMeal = sorted[0];
-  const lowestMeal = sorted[sorted.length - 1];
+  const lowestMeal = sorted.length > 1 ? sorted[sorted.length - 1] : null;
 
   return (
     <div className="space-y-6">
@@ -140,10 +142,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="text-right shrink-0">
               <div className="flex items-center gap-1 text-base font-black text-emerald-800">
                 <Star className="w-4 h-4 fill-emerald-600 text-emerald-600" />
-                <span>{highestMeal.ratingSummary?.average?.toFixed(1) || '4.8'}</span>
+                <span>{highestMeal.ratingSummary?.average?.toFixed(1) ?? '—'}</span>
               </div>
               <span className="text-[10px] text-emerald-700 font-medium">
-                {highestMeal.ratingSummary?.count || 32} ratings
+                {highestMeal.ratingSummary?.count ?? 0} ratings
               </span>
             </div>
           </div>
@@ -166,10 +168,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="text-right shrink-0">
               <div className="flex items-center gap-1 text-base font-black text-amber-800">
                 <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
-                <span>{lowestMeal.ratingSummary?.average?.toFixed(1) || '3.7'}</span>
+                <span>{lowestMeal.ratingSummary?.average?.toFixed(1) ?? '—'}</span>
               </div>
               <span className="text-[10px] text-amber-700 font-medium">
-                {lowestMeal.ratingSummary?.count || 21} ratings
+                {lowestMeal.ratingSummary?.count ?? 0} ratings
               </span>
             </div>
           </div>

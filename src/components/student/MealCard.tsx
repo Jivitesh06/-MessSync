@@ -30,8 +30,8 @@ export const MealCard: React.FC<MealCardProps> = ({
   }, [meal.id]);
 
   const statusInfo = computeMealStatus(meal);
-  const ratingAvg = liveAggregate ? liveAggregate.average : meal.ratingSummary?.average || 4.2;
-  const ratingCount = liveAggregate ? liveAggregate.count : meal.ratingSummary?.count || 24;
+  const ratingAvg = liveAggregate ? liveAggregate.average : (meal.ratingSummary?.average ?? 0);
+  const ratingCount = liveAggregate ? liveAggregate.count : (meal.ratingSummary?.count ?? 0);
 
   const handleToggleReviews = async () => {
     if (!showReviews && reviews.length === 0) {
@@ -71,11 +71,13 @@ export const MealCard: React.FC<MealCardProps> = ({
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100/80 border border-amber-200/80 text-amber-900 text-xs font-bold active-press transition-colors shrink-0"
             title="Click to rate this meal"
           >
-            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-            <span>{ratingAvg.toFixed(1)}</span>
-            <span className="text-[10px] text-amber-700 font-medium hidden sm:inline">
-              ({ratingCount})
-            </span>
+            <Star className={`w-3.5 h-3.5 ${ratingCount > 0 ? 'fill-amber-400 text-amber-400' : 'text-amber-400/60'}`} />
+            <span>{ratingCount > 0 ? ratingAvg.toFixed(1) : 'Rate'}</span>
+            {ratingCount > 0 && (
+              <span className="text-[10px] text-amber-700 font-medium hidden sm:inline">
+                ({ratingCount})
+              </span>
+            )}
           </button>
         </div>
 

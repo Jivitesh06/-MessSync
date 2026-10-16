@@ -48,8 +48,8 @@ export const CurrentMealHero: React.FC<CurrentMealHeroProps> = ({
   }
 
   const statusInfo = computeMealStatus(meal, now);
-  const ratingAvg = liveAggregate ? liveAggregate.average : meal.ratingSummary?.average || 4.2;
-  const ratingCount = liveAggregate ? liveAggregate.count : meal.ratingSummary?.count || 28;
+  const ratingAvg = liveAggregate ? liveAggregate.average : (meal.ratingSummary?.average ?? 0);
+  const ratingCount = liveAggregate ? liveAggregate.count : (meal.ratingSummary?.count ?? 0);
 
   return (
     <div className="relative overflow-hidden bg-white rounded-2xl border border-slate-200/90 shadow-elevated transition-all">
@@ -100,13 +100,22 @@ export const CurrentMealHero: React.FC<CurrentMealHeroProps> = ({
 
         {/* Rating summary strip */}
         <div className="flex items-center gap-2 mb-5">
-          <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 border border-amber-200/70 text-amber-800 text-xs font-bold">
-            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-            <span>{ratingAvg.toFixed(1)}</span>
-          </div>
-          <span className="text-xs text-slate-500">
-            Based on <strong className="text-slate-700 font-semibold">{ratingCount}</strong> student ratings
-          </span>
+          {ratingCount > 0 ? (
+            <>
+              <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 border border-amber-200/70 text-amber-800 text-xs font-bold">
+                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                <span>{ratingAvg.toFixed(1)}</span>
+              </div>
+              <span className="text-xs text-slate-500">
+                Based on <strong className="text-slate-700 font-semibold">{ratingCount}</strong> student ratings
+              </span>
+            </>
+          ) : (
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium bg-slate-50 px-2.5 py-1 rounded-md border border-slate-200/60">
+              <Star className="w-3.5 h-3.5 text-amber-400/60" />
+              <span>No ratings yet — be the first to rate</span>
+            </div>
+          )}
         </div>
 
         {/* Dishes List */}
